@@ -273,6 +273,19 @@ impl Dag {
         }
     }
 
+    /// This function is used for the execution of a single dag async
+    pub async fn start_async(&mut self) -> Result<(), DagError> {
+        // If the current continuable state is false, the task will start failing.
+        if self.can_continue.load(Ordering::Acquire) {
+            self.init()?;
+            self.run().await?;
+            Ok(())
+        } else {
+            // TODO: Change this error
+            Err(DagError::EmptyJob)
+        }
+    }
+
     /// Execute tasks sequentially according to the execution sequence given by
     /// topological sorting, and cancel the execution of subsequent tasks if an
     /// error is encountered during task execution.
@@ -357,31 +370,31 @@ impl Dag {
             }
             debug!("Executing task [name: {}, id: {}]", task_name, task_id);
             // Concrete logical behavior for performing tasks.
-            panic::catch_unwind(AssertUnwindSafe(|| action.run(Input::new(inputs), env)))
-                .map_or_else(
-                    |_| {
-                        error!("Execution failed [name: {}, id: {}]", task_name, task_id);
-                        // TODO: Change this error
-                        Err(DagError::EmptyJob)
-                    },
-                    |out| {
-                        // Store execution results
-                        if out.is_err() {
-                            let error = out.get_err().unwrap_or("".to_string());
-                            error!(
+            match panic::catch_unwind(AssertUnwindSafe(|| action.run(Input::new(inputs), env))) {
+                Err(_) => {
+                    error!("Execution failed [name: {}, id: {}]", task_name, task_id);
+                    // TODO: Change this error
+                    Err(DagError::EmptyJob)
+                }
+                Ok(out) => {
+                    let out = out.await;
+                    // Store execution results
+                    if out.is_err() {
+                        let error = out.get_err().unwrap_or("".to_string());
+                        error!(
                                 "Execution failed [name: {}, id: {}]\nerr: {}",
                                 task_name, task_id, error
                             );
-                            Err(DagError::TaskError(error))
-                        } else {
-                            execute_state.set_output(out);
-                            execute_state.exe_success();
-                            execute_state.semaphore().add_permits(task_out_degree);
-                            debug!("Execution succeed [name: {}, id: {}]", task_name, task_id);
-                            Ok(())
-                        }
-                    },
-                )
+                        Err(DagError::TaskError(error))
+                    } else {
+                        execute_state.set_output(out);
+                        execute_state.exe_success();
+                        execute_state.semaphore().add_permits(task_out_degree);
+                        debug!("Execution succeed [name: {}, id: {}]", task_name, task_id);
+                        Ok(())
+                    }
+                }
+            }
         })
     }
 

@@ -44,11 +44,12 @@ use std::sync::Arc;
 /// ```rust
 /// use dagrs::{ DefaultTask, Complex, Output, Input, EnvVar };
 /// use std::sync::Arc;
+/// use async_trait::async_trait;
 ///
 /// struct Act(u32);
-///
+/// #[async_trait]
 /// impl Complex for Act{
-///     fn run(&self, input: Input, env: Arc<EnvVar>) -> Output{
+///     async fn run(&self, input: Input, env: Arc<EnvVar>) -> Output{
 ///         Output::new(self.0+10)
 ///     }
 /// }

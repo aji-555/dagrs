@@ -1,6 +1,7 @@
 use crate::{Complex, EnvVar, Input, Output};
 use std::process::Command;
 use std::sync::Arc;
+use async_trait::async_trait;
 
 use crate::task::Content;
 
@@ -18,8 +19,9 @@ impl CommandAction {
     }
 }
 
+#[async_trait]
 impl Complex for CommandAction {
-    fn run(&self, input: Input, _env: Arc<EnvVar>) -> Output {
+    async fn run(&self, input: Input, _env: Arc<EnvVar>) -> Output {
         let mut args = Vec::new();
         let mut cmd = if cfg!(target_os = "windows") {
             args.push("-Command");

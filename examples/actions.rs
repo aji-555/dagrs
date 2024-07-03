@@ -1,12 +1,15 @@
 //! Construct two different actions.
 //! - Create a closure directly
 //! - Implementing Complex, the type can have some additional information.
-use dagrs::{Complex, DefaultTask, Output};
+use std::sync::Arc;
+use async_trait::async_trait;
+use dagrs::{Complex, DefaultTask, EnvVar, Input, Output};
 
 struct Act(usize);
 
+#[async_trait]
 impl Complex for Act {
-    fn run(&self, _input: dagrs::Input, _env: std::sync::Arc<dagrs::EnvVar>) -> Output {
+    async fn run(&self, _input: dagrs::Input, _env: std::sync::Arc<dagrs::EnvVar>) -> Output {
         Output::new(self.0 + 10)
     }
 }

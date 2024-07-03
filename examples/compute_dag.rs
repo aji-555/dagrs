@@ -13,11 +13,13 @@ extern crate dagrs;
 
 use dagrs::{Complex, Dag, DefaultTask, EnvVar, Input, Output};
 use std::sync::Arc;
+use async_trait::async_trait;
 
 struct Compute(usize);
 
+#[async_trait]
 impl Complex for Compute {
-    fn run(&self, input: Input, env: Arc<EnvVar>) -> Output {
+    async fn run(&self, input: Input, env: Arc<EnvVar>) -> Output {
         let base = env.get::<usize>("base").unwrap();
         let mut sum = self.0;
         input
@@ -25,6 +27,7 @@ impl Complex for Compute {
             .for_each(|i| sum += i.get::<usize>().unwrap() * base);
         Output::new(sum)
     }
+
 }
 
 fn main() {

@@ -1,5 +1,6 @@
 use dagrs::{dependencies, Complex, EnvVar, Input, Output};
 use std::sync::Arc;
+use async_trait::async_trait;
 
 /// The `dependencies` macro allows users to specify all task dependencies in an easy-to-understand
 /// way. It will return to the user a series of `DefaultTask` in the order of tasks given by the user.
@@ -31,8 +32,9 @@ use std::sync::Arc;
 
 struct Compute(usize);
 
+#[async_trait]
 impl Complex for Compute {
-    fn run(&self, input: Input, env: Arc<EnvVar>) -> Output {
+    async fn run(&self, input: Input, env: Arc<EnvVar>) -> Output {
         let base = env.get::<usize>("base").unwrap();
         let mut sum = self.0;
         input

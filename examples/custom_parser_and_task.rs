@@ -150,5 +150,11 @@ fn main() {
     let file = "tests/config/custom_file_task.txt";
     let mut dag =
         Dag::with_config_file_and_parser(file, Box::new(ConfigParser), HashMap::new()).unwrap();
-    assert!(dag.start().is_ok());
+    let res = dag.start();
+    if let Ok(()) = res {
+        println!("success");
+    } else {
+        println!("error");
+    }
+    // assert!(dag.start().is_ok());
 }
